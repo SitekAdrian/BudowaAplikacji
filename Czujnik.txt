@@ -1,0 +1,60 @@
+#define MIN_VOLTAGE     600 // mv - próg dolnego zakresu napiêcia dla braku py³u
+#define VREF           5000 // mv - napiêcie referencyjne komparatora
+#define PIN_LED           7 // numer pinu ILED
+#define PIN_ANALOG        0 // numer pinu AOUT
+#define MAX_ITERS        10 // liczba pomiarow do sredniej
+ 
+int ADC_VALUE; // odczytana wartosc A0
+int ITER; // numer pomiaru
+float VOLTAGE; // wartosc napiecia
+float DUST; // wynik
+float AVG_DUST; // sredni wynik
+ 
+void setup(void)
+{
+   
+  Serial.begin(9600);
+ 
+}
+ 
+float computeDust()
+{
+
+  ADC_VALUE = analogRead(PIN_ANALOG);
+  digitalWrite(PIN_LED, LOW);
+ 
+  VOLTAGE = (VREF / 1024.0) * ADC_VALUE * 11;
+ 
+   
+  if (VOLTAGE > MIN_VOLTAGE)
+  {
+    return (VOLTAGE - MIN_VOLTAGE) * 0.2;
+  }
+ 
+  return 0;
+}
+ 
+void loop(void)
+{
+   AVG_DUST = 0;
+   ITER = 0;
+ 
+   while (ITER < MAX_ITERS)
+   {
+     DUST = computeDust();
+     if (DUST > 0)
+     {
+       AVG_DUST += DUST;
+       ITER++;
+       delay(50);
+     }     
+   }
+   
+   AVG_DUST /= MAX_ITERS;
+   
+   Serial.print("D = ");
+   Serial.print(AVG_DUST);
+   Serial.println("ug/m3");    
+ 
+   delay(500);
+}
